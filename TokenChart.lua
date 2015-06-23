@@ -5,13 +5,25 @@ local TokenChartAddon = LibStub("AceAddon-3.0"):NewAddon("TokenChartAddon")
 
 local defaults = {
 	global = {
-		use24h = true,
-		history = {},
-		lifetimeHighest = 0,
-		lifetimeLowest = 10000000000,
-		version = versionNr
+		use24h = true
+		,history = {}
+		,lifetimeHighest = 0
+		,lifetimeLowest = 10000000000
+		,version = versionNr
+		,isShown = false
 	}
 }
+
+local function round(num, idp)
+	local mult = 10^(idp or 0)
+	return math.floor(num * mult + 0.5) / mult
+end
+
+
+
+local function isInteger(x)
+	return math.floor(x)==x
+end
 
 local mainEdgefile = nill
 local DEFAULT_BG = "Interface\\DialogFrame\\UI-DialogBox-Background"
@@ -53,19 +65,6 @@ local _lifetimeHighest = 0
 local _priceGoingUp = true
 local _lastChange = 0
 local _option_Use24h = false
-
-
-
-function round(num, idp)
-	local mult = 10^(idp or 0)
-	return math.floor(num * mult + 0.5) / mult
-end
-
-
-
-function isInteger(x)
-	return math.floor(x)==x
-end
 
 
 
@@ -510,7 +509,7 @@ TokenChart_Container:SetBackdrop({bgFile = TEX_TOOLTIPBG,
 	
 
 	
---TokenChart_Container:Hide()
+TokenChart_Container:Hide()
 	  
 TokenChart_Container.bg = TokenChart_Container:CreateTexture("TokenChart_Container_bg", "BORDER")
 TokenChart_Container.bg:SetTexture("Interface\\Store\\STORE-MAIN")
@@ -648,7 +647,9 @@ function TokenChartAddon:OnEnable()
 	_option_Use24h = self.db.global.use24h
 	_lifetimeHighest = self.db.global.lifetimeHighest
 	_lifetimeLowest = self.db.global.lifetimeLowest
-	
+	if self.db.global.isShown then
+		TokenChart_Container:Show()
+	end
 	
 	UpdateHistory()
 	-- _price = C_WowTokenPublic.GetCurrentMarketPrice()
@@ -726,6 +727,7 @@ function TokenChart_Events:PLAYER_LOGOUT(loadedAddon)
 	TokenChartAddon.db.global.lifetimeLowest = _lifetimeLowest
 	TokenChartAddon.db.global.version = versionNr
 	TokenChartAddon.db.global.use24h = _option_Use24h
+	TokenChartAddon.db.global.isShown = TokenChart_Container:IsShown()
 end
 
 function TokenChart_Events:ADDON_LOADED(loadedAddon)

@@ -1,8 +1,8 @@
-﻿## Interface: 60100
+﻿## Interface: 60200
 ## Title: TokenChart
 ## Notes: Keep track of the WoW Token price in game
 ## Author: LanceDH
-## Version: 6.1.b03
+## Version: 6.2.b04
 ## OptionalDeps: Ace3
 ## SavedVariables: AceDBRegionInfo
 ## SavedVariablesPerCharacter: TokenChart_History, TokenChart_Lifetime
