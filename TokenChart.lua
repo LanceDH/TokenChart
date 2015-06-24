@@ -49,6 +49,7 @@ local STRING_INFO_CHANGEUP = "Gold price is going up"
 local STRING_INFO_CHANGEUNKNOWN = "Can't determine change"
 local STRING_SUGGEST_GOLD = "Gold price is at a LOW point; \nA good time to buy with gold."
 local STRING_SUGGEST_REAL = "Gold price is at a HIGH point; \nA good time to sell a token."
+local STRING_NOPRICE = "Unavailable"
 
 local _updateInterval = 60
 local _updateTimer = _updateInterval
@@ -122,7 +123,10 @@ end
 
 local function GetPriceChange(old, new)
 	--print("Old " .. old .. " New " .. new)
-
+	if new == nil or old == nil then
+		return 0
+	end
+	
 	local perc = old / new
 	
 	if(perc > 1) then
@@ -178,12 +182,14 @@ local function GetLowestAndHighestPrice()
 	local highest = 0
 
 	for k,v in ipairs(_priceHistory) do
-		if v.price < lowest then
-			lowest = v.price
-		end
-		
-		if v.price > highest then
-			highest = v.price
+			if v.price ~= nil then
+			if v.price < lowest then
+				lowest = v.price
+			end
+			
+			if v.price > highest then
+				highest = v.price
+			end
 		end
 	end
 	
@@ -208,7 +214,7 @@ local function UpdateChartPoints()
 	for i=#_priceHistory, 1, -1 do
 
 	local timeGap = prevTime - _priceHistory[i].timeNr
-	
+	local price = _priceHistory[i].price
 	--while prevTime - _priceHistory[i].timeNr > TIME_20MIN do
 	--	count = count + 1
 	--	prevTime = prevTime - TIME_20MIN
@@ -222,16 +228,20 @@ local function UpdateChartPoints()
 		end
 	end
 	
-	if count < HISTORY_ENTRIES_MAX then
-		 local ypos = 0 + ((CHART_HEIGHT * (_priceHistory[i].price-lowest))/difference)
-		 local pointNr = HISTORY_ENTRIES_MAX - count
-		_chartPoints[pointNr]:SetPoint("bottomleft", CHARTPOINT_SIZE +pointNr*CHARTPOINT_SIZE, ypos)
-		_chartPoints[pointNr]:Show()
-		_chartPoints[pointNr].historyMoment = _priceHistory[i]
-		count = count + 1
-		prevTime = _priceHistory[i].timeNr
-	end
 	
+	
+		if count < HISTORY_ENTRIES_MAX then
+			local ypos = 0 --+ ((CHART_HEIGHT * (difference))/difference)
+			if price ~= nil then
+				ypos = 0 + ((CHART_HEIGHT * (_priceHistory[i].price-lowest))/difference)
+			end
+			 local pointNr = HISTORY_ENTRIES_MAX - count
+			_chartPoints[pointNr]:SetPoint("bottomleft", CHARTPOINT_SIZE +pointNr*CHARTPOINT_SIZE, ypos)
+			_chartPoints[pointNr]:Show()
+			_chartPoints[pointNr].historyMoment = _priceHistory[i]
+			count = count + 1
+			prevTime = _priceHistory[i].timeNr
+		end
 		
 		if count >= HISTORY_ENTRIES_MAX then
 			break
@@ -253,7 +263,13 @@ local function UpdateInfoContainer()
 	if #_priceHistory == 0 then return end
 
 	local latestPrice = _priceHistory[#_priceHistory]
-	TokenChart_InfoContainer.priceText:SetText("Current: " .. GetMoneyString(latestPrice.price))
+	
+	local message = STRING_NOPRICE
+	if price ~= nil then
+		message = "Current: " .. GetMoneyString(latestPrice.price)
+	end
+	
+	TokenChart_InfoContainer.priceText:SetText(message)
 	
 	if latestPrice.change > 0 then
 		TokenChart_InfoContainer.arrow:SetTexture(TEX_ARROWUP)
@@ -283,7 +299,13 @@ local function UpdateHistory()
 	local count = start
 	for i = 1, endPoint do
 		local historyFrame = _historyFrames[i]
-		historyFrame.goldText:SetText(GetMoneyString(_priceHistory[count].price))
+		local price = _priceHistory[count].price
+		local message = STRING_NOPRICE
+		if price ~= nil then
+			message = GetMoneyString(_priceHistory[count].price)
+		end
+		
+		historyFrame.goldText:SetText(message)
 		if _option_Use24h then
 			historyFrame.timeNrText:SetText(_priceHistory[count].time24)
 		else
@@ -365,7 +387,13 @@ end
 
 local function ShowChartPointTooltip(historyMoment, chartPoint)
 	TokenChart_Tooltip:SetPoint("bottomleft", chartPoint, "topright", 0, 0)
-	TokenChart_Tooltip.goldText:SetText(GetMoneyString(historyMoment.price))
+	
+	local message = STRING_NOPRICE
+	if price ~= nil then
+		message = GetMoneyString(GetMoneyString(historyMoment.price))
+	end
+	
+	TokenChart_Tooltip.goldText:SetText(message)
 	TokenChart_Tooltip.changeText:SetText(abs(round(historyMoment.change, 2)).."%")
 	if historyMoment.change > 0 then
 		TokenChart_Tooltip.arrow:SetTexture(TEX_ARROWUP)
@@ -698,8 +726,10 @@ function TokenChart_Events:TOKEN_MARKET_PRICE_UPDATED(loadedAddon)
 	
 
 	_price = C_WowTokenPublic.GetCurrentMarketPrice()
-
-	if _price > _lifetimeHighest then
+	
+	if _price ~= nil then 
+	
+		if _price > _lifetimeHighest then
 			_lifetimeHighest = _price
 		end
 		
@@ -707,21 +737,16 @@ function TokenChart_Events:TOKEN_MARKET_PRICE_UPDATED(loadedAddon)
 			_lifetimeLowest = _price
 		end
 	
+	end
+	
 	if(#_priceHistory == 0 or _price ~= _priceHistory[#_priceHistory].price) then
 		
 	
 		AddPriceToHistory(_price)
 	end
-	--TokenChart_Container.text:SetText(GetMoneyString(_price))
 end
 
 function TokenChart_Events:PLAYER_LOGOUT(loadedAddon)
-	--TokenChart_History = _priceHistory
-	-- local temp = {}
-	-- temp.lowest = _lifetimeLowest
-	-- temp.highest = _lifetimeHighest
-	-- temp.version = versionNr
-	-- TokenChart_Lifetime = temp
 	TokenChartAddon.db.global.history = _priceHistory
 	TokenChartAddon.db.global.lifetimeHighest = _lifetimeHighest
 	TokenChartAddon.db.global.lifetimeLowest = _lifetimeLowest
@@ -771,8 +796,13 @@ local function slashcmd(msg, editbox)
 		
 		UpdateHistory()
 	elseif msg == 'u' then
+		-- local _price = nil
 		
-		-- UpdateHistory()
+		-- if(#_priceHistory == 0 or _price ~= _priceHistory[#_priceHistory].price) then
+		
+	
+		-- 	AddPriceToHistory(_price)
+		--end
 		
 	elseif msg == 'remove' then
 	 -- table.remove(_priceHistory, #_priceHistory)

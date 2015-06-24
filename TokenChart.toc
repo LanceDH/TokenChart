@@ -2,7 +2,7 @@
 ## Title: TokenChart
 ## Notes: Keep track of the WoW Token price in game
 ## Author: LanceDH
-## Version: 6.2.b04
+## Version: 6.2.b05
 ## OptionalDeps: Ace3
 ## SavedVariables: AceDBRegionInfo
 ## SavedVariablesPerCharacter: TokenChart_History, TokenChart_Lifetime
