@@ -265,7 +265,7 @@ local function UpdateInfoContainer()
 	local latestPrice = _priceHistory[#_priceHistory]
 	
 	local message = STRING_NOPRICE
-	if price ~= nil then
+	if latestPrice.price ~= nil then
 		message = "Current: " .. GetMoneyString(latestPrice.price)
 	end
 	
@@ -276,6 +276,7 @@ local function UpdateInfoContainer()
 		TokenChart_InfoContainer.changeText:SetText(STRING_INFO_CHANGEUP)
 	end
 	if latestPrice.change < 0 then
+		
 		TokenChart_InfoContainer.arrow:SetTexture(TEX_ARROWDOWN)
 		TokenChart_InfoContainer.changeText:SetText(STRING_INFO_CHANGEDOWN)
 	end
@@ -317,6 +318,7 @@ local function UpdateHistory()
 		end
 		if _priceHistory[count].change < 0 then
 			historyFrame.arrow:SetTexture(TEX_ARROWDOWN)
+			--historyFrame.arrow:SetVertexColor(0, 1, 0, 1)
 		end
 		
 		count = count + 1
@@ -389,8 +391,8 @@ local function ShowChartPointTooltip(historyMoment, chartPoint)
 	TokenChart_Tooltip:SetPoint("bottomleft", chartPoint, "topright", 0, 0)
 	
 	local message = STRING_NOPRICE
-	if price ~= nil then
-		message = GetMoneyString(GetMoneyString(historyMoment.price))
+	if historyMoment.price ~= nil then
+		message = GetMoneyString(historyMoment.price)
 	end
 	
 	TokenChart_Tooltip.goldText:SetText(message)
@@ -805,8 +807,8 @@ local function slashcmd(msg, editbox)
 		--end
 		
 	elseif msg == 'remove' then
-	 -- table.remove(_priceHistory, #_priceHistory)
-	 -- UpdateHistory()
+	 --table.remove(_priceHistory, #_priceHistory)
+	 --UpdateHistory()
 	
 	elseif msg == 'reset' then
 	
